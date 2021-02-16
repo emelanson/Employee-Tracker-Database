@@ -15,19 +15,52 @@ var connection = mysql.createConnection({
     database: "employee_trackerdb"
 });
 
-connection.connect(function (err) {
+//connection and demo logs
+
+connection.connect(err => {
     console.log("=========CONNECTED TO EMPLOYEE MANAGEMENT SYSTEM======")
     if (err) throw err;
 
-    connection.query("SELECT * FROM employee_trackerdb.role", function (err, res) {
+    connection.query("SELECT * FROM employee_trackerdb.role", res => {
         console.table(res);
     });
 
-    connection.query("SELECT * FROM employee_trackerdb.employee", function (err, res) {
+    connection.query("SELECT * FROM employee_trackerdb.employee", res => {
         console.table(res);
     });
 
-    connection.query("SELECT * FROM employee_trackerdb.department", function (err, res) {
+    connection.query("SELECT * FROM employee_trackerdb.department", res => {
         console.table(res);
     });
+
+    runManagement();
 });
+
+function runManagement() {
+    inquirer
+        .prompt({
+            name: "action",
+            type: "rawlist",
+            message: "Welcome to the Employee Management System.  Select an action.",
+            choices: [
+                "View Data",
+                "Add Data",
+                "~~~EXIT~~~"
+            ]
+        })
+        .then(answer => {
+            switch (answer.action) {
+                case "View Data":
+
+                    break;
+                case "Add Data":
+                    break;
+
+                case "~~~EXIT~~~":
+                    "EXITING EMPLOYEE CMS"
+                    connection.end;
+                    process.exit();
+            };
+
+        });
+};
