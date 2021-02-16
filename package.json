@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/emelanson/Homework-Week-12#readme",
   "dependencies": {
+    "inquirer": "^7.3.3",
     "mysql": "^2.18.1"
   }
 }
