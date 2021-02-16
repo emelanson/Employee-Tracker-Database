@@ -15,7 +15,7 @@ var connection = mysql.createConnection({
     database: "employee_trackerdb"
 });
 
-//connection and demo logs
+
 
 connection.connect(err => {
     console.log("=========CONNECTED TO EMPLOYEE MANAGEMENT SYSTEM======")
@@ -71,22 +71,17 @@ function viewData() {
 
                 switch (answer.data) {
                     case "role":
-                        connection.query("SELECT * FROM role", (err, res) => {
-                            if (err) console.log(err);
-                            console.table(res)
-                        });
+                        viewRole();
                         break;
                     case "employee":
-                        connection.query("SELECT employee.id, employee.first_name, employee.last_name, role.title, role.salary FROM employee INNER JOIN role ON (employee.role_id = role.id)", query, (err, res) => {
-                            if (err) console.log(err);
-                            console.table(res)
-                        });
-
+                        viewEmployee();
                         break;
                     case "department":
-                        connection.query("SELECT * FROM role", (err, res) => {
+                        connection.query("SELECT * FROM department", (err, res) => {
                             if (err) console.log(err);
+                            console.log(`\n`)
                             console.table(res)
+                            console.log(`\n`)
                         });
 
                         break;
@@ -96,19 +91,30 @@ function viewData() {
                 }
 
             };
-            runManagement();
         });
 };
 
+const viewRole = () => {
+    connection.query(`SELECT * 
+    FROM role
+    INNER JOIN department ON (role.department_id = department.id)`, (err, res) => {
+        if (err) console.log(err);
+        console.log("Role View")
+        console.table(res)
+        console.log(`\n`)
+        runManagement();
+    });
+};
 
-//     connection.query("SELECT * FROM employee_trackerdb.role", res => {
-//     console.table(res);
-// });
-
-// connection.query("SELECT * FROM employee_trackerdb.employee", res => {
-//     console.table(res);
-// });
-
-// connection.query("SELECT * FROM employee_trackerdb.department", res => {
-//     console.table(res);
-// });
+const viewEmployee = () => {
+    connection.query(`SELECT employee.id, employee.first_name AS 'First Name', employee.last_name AS 'Last Name', role.title, role.salary, CONCAT(Manager.first_name, ' ', Manager.last_name) AS 'Manager', employee.manager_id 
+    FROM employee 
+    INNER JOIN role ON (employee.role_id = role.id)
+    LEFT JOIN employee AS Manager On (employee.manager_id = Manager.id);`, (err, res) => {
+        if (err) console.log(err);
+        console.log("Employee View")
+        console.table(res)
+        console.log(`\n`)
+        runManagement();
+    });
+};
