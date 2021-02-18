@@ -62,7 +62,7 @@ const addData = () => {
         .prompt({
             name: "action",
             type: "rawlist",
-            message: "Welcome to the Employee Management System.  Select an action.",
+            message: "Choose a category of data to add or update",
             choices: [
                 "Add Employee",
                 "Add Role",
@@ -76,7 +76,7 @@ const addData = () => {
                     addEmployee();
                     break;
                 case "Add Role":
-                    viewRole();
+                    addRole();
                     break;
                 case "Add Department":
                     viewDepartments();
@@ -136,50 +136,89 @@ const viewEmployee = () => {
 
 const addEmployee = () => {
 
-    var choices = [];
+    let choices = [];
 
     connection.query("SELECT role.title FROM role", (err, res) => {
         if (err) console.log(err);;
-        res.forEach(element => {
-            choices.push(element.title)
+        res.forEach((element, index) => {
+            let title = element.title;
+            //offset index to produce DB id
+            let id = index + 1;
+            choices.push({ name: title, value: id });
         });
-    })
+    });
 
     inquirer
         .prompt([
             {
-                name: "first_name",
+                name: "firstName",
                 type: "input",
                 message: "Enter employee's first name: ",
             },
             {
-                name: "last_name",
+                name: "lastName",
                 type: "input",
                 message: "Enter employee's Last name: ",
             },
             {
-                name: "role",
+                name: "roleId",
                 type: "list",
                 message: "Select the employee's role: ",
                 choices: choices,
             }
         ]).then(ans => {
 
-            const { first_name, last_name, role } = ans;
-
-            let roleId = choices.findIndex(e => {
-                return e == role;
-            });
-
-            //offset index
-            roleId += 1;
+            const { firstName, lastName, roleId } = ans;
 
             connection.query(`INSERT INTO employee (first_name, last_name, role_id) 
-            VALUES ('${first_name}', '${last_name}', '${roleId}')`, (err, res) => {
+            VALUES ('${firstName}', '${lastName}', '${roleId}')`, (err, res) => {
                 if (err) throw error;
-                console.log(`${first_name} ${last_name} the ${role} has been added.`);
+                console.log(`${firstName} ${lastName} added.`, '\n');
             });
             runManagement();
         });
 
+};
+
+const addRole = () => {
+    let choices = [];
+
+    connection.query("SELECT department.name FROM department", (err, res) => {
+        if (err) console.log(err);;
+        res.forEach((element, index) => {
+            let dep = element.name;
+            //offset index to produce DB id
+            let id = index + 1;
+            choices.push({ name: dep, value: id });
+        });
+    });
+
+    inquirer
+        .prompt([
+            {
+                name: "title",
+                type: "input",
+                message: "Enter a title for the new role: ",
+            },
+            {
+                name: "salary",
+                type: "number",
+                message: "Enter a Salary for the new role: ",
+            },
+            {
+                name: "department_id",
+                type: "list",
+                message: "Select a department for the role to belong to: ",
+                choices: choices,
+            }
+        ]).then(ans => {
+            let { title, salary, department_id } = ans;
+
+            connection.query(`INSERT INTO role (title, salary, department_id) 
+            VALUES ('${title}', '${salary}', '${department_id}')`, (err, res) => {
+                if (err) throw error;
+                console.log(`The role ${title} with a salary of ${salary} has been added.`, '\n');
+            });
+            runManagement();
+        });
 };
