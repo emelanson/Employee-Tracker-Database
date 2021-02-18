@@ -57,6 +57,37 @@ const runManagement = () => {
         });
 };
 
+const addData = () => {
+    inquirer
+        .prompt({
+            name: "action",
+            type: "rawlist",
+            message: "Welcome to the Employee Management System.  Select an action.",
+            choices: [
+                "Add Employee",
+                "Add Role",
+                "Add Department",
+                "~~~BACK~~~"
+            ]
+        })
+        .then(answer => {
+            switch (answer.action) {
+                case "Add Employee":
+                    addEmployee();
+                    break;
+                case "Add Role":
+                    viewRole();
+                    break;
+                case "Add Department":
+                    viewDepartments();
+                    break;
+                case "~~~BACK~~~":
+                    runManagement();
+                    break;
+            };
+        });
+};
+
 
 
 ////////////
@@ -103,3 +134,52 @@ const viewEmployee = () => {
 //ADD FUNCTIONS
 /////////
 
+const addEmployee = () => {
+
+    var choices = [];
+
+    connection.query("SELECT role.title FROM role", (err, res) => {
+        if (err) console.log(err);;
+        res.forEach(element => {
+            choices.push(element.title)
+        });
+    })
+
+    inquirer
+        .prompt([
+            {
+                name: "first_name",
+                type: "input",
+                message: "Enter employee's first name: ",
+            },
+            {
+                name: "last_name",
+                type: "input",
+                message: "Enter employee's Last name: ",
+            },
+            {
+                name: "role",
+                type: "list",
+                message: "Select the employee's role: ",
+                choices: choices,
+            }
+        ]).then(ans => {
+
+            const { first_name, last_name, role } = ans;
+
+            let roleId = choices.findIndex(e => {
+                return e == role;
+            });
+
+            //offset index
+            roleId += 1;
+
+            connection.query(`INSERT INTO employee (first_name, last_name, role_id) 
+            VALUES ('${first_name}', '${last_name}', '${roleId}')`, (err, res) => {
+                if (err) throw error;
+                console.log(`${first_name} ${last_name} the ${role} has been added.`);
+            });
+            runManagement();
+        });
+
+};
