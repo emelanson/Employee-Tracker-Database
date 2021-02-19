@@ -30,7 +30,7 @@ const runManagement = () => {
                 "View Employees",
                 "View Roles",
                 "View Departments",
-                "Add Data",
+                "Add/Update Data",
                 "~~~EXIT~~~"
             ]
         })
@@ -45,7 +45,7 @@ const runManagement = () => {
                 case "View Departments":
                     viewDepartments();
                     break;
-                case "Add Data":
+                case "Add/Update Data":
                     addData();
                     break;
                 case "~~~EXIT~~~":
@@ -67,6 +67,7 @@ const addData = () => {
                 "Add Employee",
                 "Add Role",
                 "Add Department",
+                "Update employee role",
                 "~~~BACK~~~"
             ]
         })
@@ -79,7 +80,10 @@ const addData = () => {
                     addRole();
                     break;
                 case "Add Department":
-                    viewDepartments();
+                    addDepartment();
+                    break;
+                case "Update employee role":
+                    updateEmployee();
                     break;
                 case "~~~BACK~~~":
                     runManagement();
@@ -222,3 +226,84 @@ const addRole = () => {
             runManagement();
         });
 };
+
+const addDepartment = () => {
+    inquirer
+        .prompt([
+            {
+                name: "name",
+                type: "input",
+                message: "Enter a name for the new department: ",
+            },
+        ]).then(ans => {
+            let { name } = ans;
+
+            connection.query(`INSERT INTO department (name) 
+            VALUES ('${name}')`, (err, res) => {
+                if (err) throw error;
+                console.log(`The ${name} department has been created`, '\n');
+            });
+            runManagement();
+        });
+};
+
+////////////
+//UPDATE FUNCTIONS
+///////////
+
+function updateEmployee() {
+    let employeeChoices = [];
+    let roleChoices = [];
+
+    connection.query("SELECT first_name, last_name FROM employee", (err, res) => {
+        if (err) console.log(err);
+
+        res.forEach((element, index) => {
+            let person = element.first_name + " " + element.last_name;
+            //offset index to produce DB id
+            let eid = index + 1;
+            employeeChoices.push({ name: person, value: eid });
+        });
+    });
+
+    connection.query("SELECT role.title FROM role", (err, res) => {
+        if (err) console.log(err);;
+        res.forEach((element, index) => {
+            let title = element.title;
+            //offset index to produce DB id
+            let id = index + 1;
+            roleChoices.push({ name: title, value: id });
+        });
+    });
+
+    inquirer
+        .prompt([
+            //For some reason I need this first prompt???  Tried lots of async options without it and it doesn't work as expected.
+            {
+                name: "update",
+                type: "confirm",
+                message: "Enter any key"
+            },
+            {
+                name: "employeeid",
+                type: "list",
+                message: "Select an employee to update: ",
+                choices: employeeChoices,
+            },
+            {
+                name: "roleid",
+                type: "list",
+                message: "Select their new role: ",
+                choices: roleChoices,
+            }
+        ]).then(ans => {
+            let { roleid, employeeid } = ans;
+            console.log("Updating the values: ", { roleid, employeeid })
+
+            connection.query(`UPDATE employee SET role_id ? WHERE employeeid ?
+            VALUES ('${roleid}', '${employeeid}')`, (err, res) => {
+                if (err) throw error;
+            });
+            runManagement();
+        });
+}
