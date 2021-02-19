@@ -10,7 +10,9 @@ var connection = mysql.createConnection({
 });
 
 connection.connect(err => {
+    console.log("===================================================")
     console.log("======CONNECTED TO EMPLOYEE MANAGEMENT SYSTEM======")
+    console.log("===================================================")
     if (err) throw err;
     //Start program
     runManagement();
@@ -20,76 +22,52 @@ connection.connect(err => {
 //INQUIRER MENUS
 /////////
 
-const runManagement = () => {
-    inquirer
+const runManagement = async () => {
+    let answer = await inquirer
         .prompt({
             name: "action",
             type: "rawlist",
-            message: "Welcome to the Employee Management System.  Select an action.",
+            message: "======= \n ==Select an action. \n =======",
             choices: [
                 "View Employees",
                 "View Roles",
                 "View Departments",
-                "Add/Update Data",
-                "~~~EXIT~~~"
-            ]
-        })
-        .then(answer => {
-            switch (answer.action) {
-                case "View Employees":
-                    viewEmployee();
-                    break;
-                case "View Roles":
-                    viewRole();
-                    break;
-                case "View Departments":
-                    viewDepartments();
-                    break;
-                case "Add/Update Data":
-                    addData();
-                    break;
-                case "~~~EXIT~~~":
-                    "EXITING EMPLOYEE CMS"
-                    //end connection and exit program
-                    connection.end;
-                    process.exit();
-            };
-        });
-};
-
-const addData = () => {
-    inquirer
-        .prompt({
-            name: "action",
-            type: "rawlist",
-            message: "Choose a category of data to add or update",
-            choices: [
                 "Add Employee",
                 "Add Role",
                 "Add Department",
                 "Update employee role",
-                "~~~BACK~~~"
+                "~~~EXIT~~~"
             ]
         })
-        .then(answer => {
-            switch (answer.action) {
-                case "Add Employee":
-                    addEmployee();
-                    break;
-                case "Add Role":
-                    addRole();
-                    break;
-                case "Add Department":
-                    addDepartment();
-                    break;
-                case "Update employee role":
-                    updateEmployee();
-                    break;
-                case "~~~BACK~~~":
-                    runManagement();
-                    break;
-            };
-        });
+
+    switch (answer.action) {
+        case "View Employees":
+            viewEmployee();
+            break;
+        case "View Roles":
+            viewRole();
+            break;
+        case "View Departments":
+            viewDepartments();
+            break;
+        case "Add Employee":
+            addEmployee();
+            break;
+        case "Add Role":
+            addRole();
+            break;
+        case "Add Department":
+            addDepartment();
+            break;
+        case "Update employee role":
+            updateEmployee();
+            break;
+        case "~~~EXIT~~~":
+            "EXITING EMPLOYEE CMS"
+            //end connection and exit program
+            connection.end;
+            process.exit();
+    };
 };
 
 
@@ -138,7 +116,7 @@ const viewEmployee = () => {
 //ADD FUNCTIONS
 /////////
 
-const addEmployee = () => {
+const addEmployee = async () => {
 
     let choices = [];
 
@@ -152,7 +130,7 @@ const addEmployee = () => {
         });
     });
 
-    inquirer
+    await inquirer
         .prompt([
             {
                 name: "firstName",
@@ -170,16 +148,18 @@ const addEmployee = () => {
                 message: "Select the employee's role: ",
                 choices: choices,
             }
-        ]).then(ans => {
+        ]).then(async (ans) => {
 
             const { firstName, lastName, roleId } = ans;
 
             connection.query(`INSERT INTO employee (first_name, last_name, role_id) 
             VALUES ('${firstName}', '${lastName}', '${roleId}')`, (err, res) => {
-                if (err) throw error;
-                console.log(`${firstName} ${lastName} added.`, '\n');
+                if (err)
+                    throw error;
             });
-            runManagement();
+
+            console.log(`${firstName} ${lastName} added.`, '\n');
+            return await runManagement();
         });
 
 };
@@ -215,7 +195,7 @@ const addRole = () => {
                 message: "Select a department for the role to belong to: ",
                 choices: choices,
             }
-        ]).then(ans => {
+        ]).then(async ans => {
             let { title, salary, department_id } = ans;
 
             connection.query(`INSERT INTO role (title, salary, department_id) 
@@ -223,7 +203,7 @@ const addRole = () => {
                 if (err) throw error;
                 console.log(`The role ${title} with a salary of ${salary} has been added.`, '\n');
             });
-            runManagement();
+            return await runManagement();
         });
 };
 
@@ -235,7 +215,7 @@ const addDepartment = () => {
                 type: "input",
                 message: "Enter a name for the new department: ",
             },
-        ]).then(ans => {
+        ]).then(async ans => {
             let { name } = ans;
 
             connection.query(`INSERT INTO department (name) 
@@ -243,7 +223,7 @@ const addDepartment = () => {
                 if (err) throw error;
                 console.log(`The ${name} department has been created`, '\n');
             });
-            runManagement();
+            return await runManagement();
         });
 };
 
@@ -251,59 +231,59 @@ const addDepartment = () => {
 //UPDATE FUNCTIONS
 ///////////
 
-function updateEmployee() {
-    let employeeChoices = [];
-    let roleChoices = [];
+const updateEmployee = async () => {
 
     connection.query("SELECT first_name, last_name FROM employee", (err, res) => {
         if (err) console.log(err);
+        let employeeChoices = [];
 
-        res.forEach((element, index) => {
+        res.map((element, index) => {
             let person = element.first_name + " " + element.last_name;
             //offset index to produce DB id
             let eid = index + 1;
             employeeChoices.push({ name: person, value: eid });
         });
+
+        connection.query("SELECT role.title FROM role", (err, res) => {
+            if (err) console.log(err);;
+
+            let roles = [];
+            res.map((r, index) => {
+                let title = r.title;
+                //offset index to produce DB id
+                let id = index + 1;
+                roles.push({ name: title, value: id });
+            })
+
+            inquirer
+                .prompt([
+                    {
+                        name: "employeeId",
+                        type: "list",
+                        message: "Select an employee to update: ",
+                        choices: employeeChoices,
+                    },
+                    {
+                        name: "roleId",
+                        type: "list",
+                        message: "Select their new role: ",
+                        choices: roles,
+                    }
+                ]).then((ans, err) => {
+                    if (err) throw err;
+
+                    const { roleId, employeeId } = ans;
+                    console.log(ans);
+
+                    connection.query(`UPDATE employee SET role_id ? WHERE employeeid ?
+                        VALUES ('${roleId}', '${employeeId}')`, (err) => {
+                        if (err) throw error;
+                    });
+
+                    console.log("Updating the values: ", { roleId, employeeId }, "\n")
+                });
+
+        })
     });
 
-    connection.query("SELECT role.title FROM role", (err, res) => {
-        if (err) console.log(err);;
-        res.forEach((element, index) => {
-            let title = element.title;
-            //offset index to produce DB id
-            let id = index + 1;
-            roleChoices.push({ name: title, value: id });
-        });
-    });
-
-    inquirer
-        .prompt([
-            //For some reason I need this first prompt???  Tried lots of async options without it and it doesn't work as expected.
-            {
-                name: "update",
-                type: "confirm",
-                message: "Enter any key"
-            },
-            {
-                name: "employeeid",
-                type: "list",
-                message: "Select an employee to update: ",
-                choices: employeeChoices,
-            },
-            {
-                name: "roleid",
-                type: "list",
-                message: "Select their new role: ",
-                choices: roleChoices,
-            }
-        ]).then(ans => {
-            let { roleid, employeeid } = ans;
-            console.log("Updating the values: ", { roleid, employeeid })
-
-            connection.query(`UPDATE employee SET role_id ? WHERE employeeid ?
-            VALUES ('${roleid}', '${employeeid}')`, (err, res) => {
-                if (err) throw error;
-            });
-            runManagement();
-        });
 }
