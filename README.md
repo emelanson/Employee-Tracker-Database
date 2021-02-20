@@ -3,13 +3,13 @@
 
 ## Description
 
-[<img src="./Assets/employee-tracker.gif"/>]
+<img src="./Assets/employee-tracker.gif"/>
 
 Employee Tracker is a nodeJS based CLI with a mySQL database backend.  Its use is to help a company organize and manage employee roles, titles, salaries, and departments.  It utilizes the mySQL NPM package.
 
 The program is built around the following schema.
 
-[<img src="./Assets/schema.png"/>]
+<img src="./Assets/schema.png"/>
 
 ## Table of Contents
 
