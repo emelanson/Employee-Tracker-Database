@@ -275,12 +275,15 @@ const updateEmployee = async () => {
                     const { roleId, employeeId } = ans;
                     console.log(ans);
 
-                    connection.query(`UPDATE employee SET role_id ? WHERE employeeid ?
-                        VALUES ('${roleId}', '${employeeId}')`, (err) => {
-                        if (err) throw error;
-                    });
 
-                    console.log("Updating the values: ", { roleId, employeeId }, "\n")
+                    connection.query(`UPDATE employee SET role_id = ?  WHERE id = ?`,
+                        [roleId, employeeId], (err) => {
+                            if (err) throw err;
+                            console.log("Updating the values: ", { roleId, employeeId }, "\n")
+                            return runManagement();
+                        });
+
+
                 });
 
         })
